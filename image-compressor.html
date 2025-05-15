@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Compressor</title>
+  <style>
+    :root {
+      --primary-color: #00aaff;
+      --secondary-color: #ffffff;
+      --bg-color: #f0faff;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      background: var(--secondary-color);
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 170, 255, 0.2);
+      text-align: center;
+    }
+
+    h1 {
+      color: var(--primary-color);
+    }
+
+    input[type="file"] {
+      margin: 20px 0;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #008ecc;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 15px;
+      }
+
+      button {
+        width: 100%;
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Image Compressor</h1>
+    <input type="file" id="upload" accept="image/*" />
+    <br />
+    <img id="preview" style="display:none;" />
+    <br />
+    <button onclick="compressImage()">Compress & Download</button>
+  </div>
+
+  <script>
+    const uploadInput = document.getElementById("upload");
+    const previewImg = document.getElementById("preview");
+
+    let originalImage;
+
+    uploadInput.addEventListener("change", function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        previewImg.src = event.target.result;
+        previewImg.style.display = "block";
+        originalImage = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function compressImage() {
+      if (!originalImage) return alert("Please upload an image first.");
+
+      const img = new Image();
+      img.src = originalImage;
+      img.onload = function () {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const MAX_WIDTH = 800;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(
+          function (blob) {
+            const link = document.createElement("a");
+            link.download = "compressed-image.jpg";
+            link.href = URL.createObjectURL(blob);
+            link.click();
+          },
+          "image/jpeg",
+          0.7 // compression quality
+        );
+      };
+    }
+  </script>
+</body>
+</html>
