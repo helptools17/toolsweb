@@ -4,125 +4,143 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Image Cropper Tool</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet"/>
   <style>
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
       background-color: #ffffff;
-      color: #222;
+      color: #000;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
     }
 
-    header {
-      background-color: #0099ff;
-      padding: 1rem;
+    h1 {
+      color: #007bff;
       text-align: center;
-      color: white;
     }
 
     .container {
-      padding: 1rem;
       max-width: 600px;
-      margin: auto;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f0f8ff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
-    .upload-section {
+    .img-container {
+      max-width: 100%;
+      height: auto;
+      margin-top: 20px;
       display: flex;
-      flex-direction: column;
-      gap: 1rem;
+      justify-content: center;
     }
 
-    input[type="file"],
-    input[type="number"],
-    select,
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .controls {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    input[type="file"] {
+      display: block;
+      margin: 0 auto 10px auto;
+    }
+
+    label, input, button {
+      margin: 5px;
+    }
+
     button {
-      padding: 0.5rem;
-      border: 1px solid #ccc;
+      background-color: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
       border-radius: 5px;
+      cursor: pointer;
     }
 
-    #preview {
-      width: 100%;
-      max-height: 400px;
-      object-fit: contain;
-      margin-top: 1rem;
+    button:hover {
+      background-color: #0056b3;
     }
 
     @media (max-width: 600px) {
-      input,
-      select,
-      button {
+      .container {
+        padding: 10px;
+      }
+
+      input, button {
         width: 100%;
+        margin: 10px 0;
       }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Image Cropper Tool</h1>
-  </header>
+  <h1>Image Cropper Tool</h1>
   <div class="container">
-    <div class="upload-section">
-      <input type="file" id="imageInput" accept="image/*" />
-      <label>
-        Aspect Ratio:
-        <select id="aspectRatio">
-          <option value="NaN">Free</option>
-          <option value="1">1:1</option>
-          <option value="16/9">16:9</option>
-          <option value="4/3">4:3</option>
-        </select>
-      </label>
-      <button id="cropButton">Crop Image</button>
-      <canvas id="canvas" style="display:none;"></canvas>
-      <img id="preview" />
+    <input type="file" id="upload" accept="image/*" />
+    <div class="img-container">
+      <img id="image" style="display:none;" />
+    </div>
+
+    <div class="controls">
+      <label>Aspect Ratio: </label>
+      <select id="aspectRatio">
+        <option value="NaN">Free</option>
+        <option value="1">1:1</option>
+        <option value="16/9">16:9</option>
+        <option value="4/3">4:3</option>
+        <option value="3/2">3:2</option>
+      </select>
+      <br />
+      <button id="crop">Crop & Download</button>
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
   <script>
+    const image = document.getElementById('image');
+    const upload = document.getElementById('upload');
+    const aspectRatioSelect = document.getElementById('aspectRatio');
+    const cropBtn = document.getElementById('crop');
+
     let cropper;
-    const imageInput = document.getElementById("imageInput");
-    const preview = document.getElementById("preview");
-    const aspectRatioSelect = document.getElementById("aspectRatio");
-    const cropButton = document.getElementById("cropButton");
-    const canvas = document.getElementById("canvas");
 
-    imageInput.addEventListener("change", function (e) {
+    upload.addEventListener('change', (e) => {
       const file = e.target.files[0];
-      if (file && /^image\/.+/.test(file.type)) {
-        const reader = new FileReader();
-        reader.onload = function (event) {
-          if (cropper) cropper.destroy();
-          preview.src = event.target.result;
-          preview.onload = () => {
-            cropper = new Cropper(preview, {
-              aspectRatio: NaN,
-              viewMode: 1,
-              responsive: true,
-            });
-          };
-        };
-        reader.readAsDataURL(file);
-      }
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        image.src = reader.result;
+        image.style.display = 'block';
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(image, {
+          aspectRatio: NaN,
+          viewMode: 1,
+          responsive: true,
+        });
+      };
+      reader.readAsDataURL(file);
     });
 
-    aspectRatioSelect.addEventListener("change", function () {
-      const ratio = parseFloat(this.value);
-      if (cropper) cropper.setAspectRatio(isNaN(ratio) ? NaN : ratio);
+    aspectRatioSelect.addEventListener('change', () => {
+      const ratio = eval(aspectRatioSelect.value);
+      if (cropper) cropper.setAspectRatio(ratio);
     });
 
-    cropButton.addEventListener("click", function () {
-      if (cropper) {
-        const croppedCanvas = cropper.getCroppedCanvas();
-        canvas.style.display = "block";
-        canvas.width = croppedCanvas.width;
-        canvas.height = croppedCanvas.height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(croppedCanvas, 0, 0);
-        preview.src = canvas.toDataURL("image/png");
-        cropper.destroy();
-      }
+    cropBtn.addEventListener('click', () => {
+      if (!cropper) return;
+      const canvas = cropper.getCroppedCanvas();
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL();
+      link.download = 'cropped-image.png';
+      link.click();
     });
   </script>
 </body>
